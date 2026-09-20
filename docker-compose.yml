@@ -1,0 +1,39 @@
+version: "3.8"
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: products_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: testdb
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-prootpassword"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: .
+    container_name: products_backend
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      DB_HOST: mysql
+      DB_USER: root
+      DB_PASSWORD: rootpassword
+      DB_NAME: testdb
+      PORT: 5000
+    ports:
+      - "5000:5000"
+
+volumes:
+  mysql_data:
