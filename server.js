@@ -66,6 +66,8 @@ function createProductsTable() {
   });
 }
 
+
+
 // ---------- CRUD ROUTES ----------
 
 // CREATE - Add a new product
