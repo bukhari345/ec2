@@ -77,6 +77,7 @@ app.post('/products', (req, res) => {
   if (!product_name) {
     return res.status(400).json({ error: 'product_name is required' });
   }
+  
 
   const query = 'INSERT INTO products (product_name, category, price, stock_quantity) VALUES (?, ?, ?, ?)';
   db.query(query, [product_name, category, price, stock_quantity], (err, result) => {
