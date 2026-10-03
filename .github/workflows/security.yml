@@ -1,0 +1,71 @@
+name: Security Scans
+
+# Runs the security tools on every push/PR to master.
+# NOTE: while you're learning, every job uses `continue-on-error: true`,
+# so a finding WARNS but does NOT block you. Once your pipeline is clean,
+# remove those lines to make the scans real gates that fail the build.
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  # 1) SECRETS SCAN — catches hardcoded passwords / API keys
+  gitleaks:
+    name: Secret scan (Gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history so it can scan past commits too
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # 2) CODE SCAN (SAST) — finds vulns/bugs in your JavaScript source
+  semgrep:
+    name: Code scan (Semgrep)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Semgrep
+        uses: semgrep/semgrep-action@v1
+        continue-on-error: true
+        with:
+          config: p/javascript   # also try p/security-audit, p/owasp-top-ten
+
+  # 3) DEPENDENCY SCAN — flags vulnerable npm packages from package-lock.json
+  trivy-deps:
+    name: Dependency scan (Trivy)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scan project dependencies
+        uses: aquasecurity/trivy-action@v0.36.0
+        continue-on-error: true
+        with:
+          scan-type: fs          # filesystem scan (reads package-lock.json)
+          scan-ref: .
+          severity: HIGH,CRITICAL
+          exit-code: 1
+
+  # 4) IMAGE SCAN — builds your Docker image and scans it for OS/package CVEs
+  trivy-image:
+    name: Docker image scan (Trivy)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t backend:${{ github.sha }} .
+      - name: Scan image
+        uses: aquasecurity/trivy-action@v0.36.0
+        continue-on-error: true
+        with:
+          scan-type: image
+          image-ref: backend:${{ github.sha }}
+          severity: HIGH,CRITICAL
+          exit-code: 1
