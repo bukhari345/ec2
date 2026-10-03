@@ -69,3 +69,16 @@ jobs:
           image-ref: backend:${{ github.sha }}
           severity: HIGH,CRITICAL
           exit-code: 1
+
+  # 5) INFRASTRUCTURE SCAN (IaC) — scans the Terraform code for misconfigurations
+  #    e.g. ports open to the world, unencrypted disks, missing IMDSv2.
+  tfsec:
+    name: Terraform scan (tfsec)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run tfsec
+        uses: aquasecurity/tfsec-action@v1.0.3
+        continue-on-error: true
+        with:
+          working_directory: terraform

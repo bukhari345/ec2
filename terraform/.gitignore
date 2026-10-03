@@ -1,0 +1,18 @@
+# Never commit these.
+# (Comments must be on their own line — a trailing "# ..." becomes part of the pattern.)
+
+# downloaded provider plugins
+.terraform/
+
+# state files — can contain secrets
+*.tfstate
+*.tfstate.backup
+
+# your real values (IP, key name, repo)
+terraform.tfvars
+*.tfvars.json
+
+# private SSH keys
+*.pem
+
+crash.log
